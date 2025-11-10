@@ -1,0 +1,161 @@
+# Anomaly Detection Configuration
+
+# Statistical Detection Parameters
+statistical:
+  zscore:
+    enabled: true
+    threshold: 3.0  # Standard deviations from mean
+    window_size: 50  # Number of data points for rolling calculation
+
+  modified_zscore:
+    enabled: true
+    threshold: 3.5  # Modified Z-score threshold
+
+  iqr:
+    enabled: true
+    multiplier: 1.5  # IQR multiplier for outlier bounds
+
+  cusum:
+    enabled: true
+    threshold: 5.0  # CUSUM threshold
+    drift: 0.5  # Drift parameter
+
+# Time Series Detection Parameters
+temporal:
+  moving_average:
+    enabled: true
+    short_window: 5
+    long_window: 20
+    deviation_threshold: 0.15  # 15% deviation triggers anomaly
+
+  exponential_smoothing:
+    enabled: true
+    alpha: 0.3  # Smoothing parameter
+
+  changepoint:
+    enabled: true
+    penalty: 10  # Penalty for changepoint detection
+    min_size: 5  # Minimum segment size
+
+# Machine Learning Detection Parameters
+ml:
+  isolation_forest:
+    enabled: true
+    contamination: 0.1  # Expected proportion of outliers
+    n_estimators: 100
+    max_samples: 256
+
+  local_outlier_factor:
+    enabled: true
+    n_neighbors: 20
+    contamination: 0.1
+
+# Correlation Detection Parameters
+correlation:
+  enabled: true
+  pearson_threshold: 0.7  # Correlation coefficient threshold
+  spearman_threshold: 0.7
+  window_size: 30  # Window for correlation calculation
+  break_threshold: 0.3  # Correlation break detection
+
+# Data Source Specific Settings
+data_sources:
+  cryptocurrency:
+    symbols: ["bitcoin", "ethereum", "cardano", "solana"]
+    metrics: ["price_usd", "volume_24h", "market_cap"]
+    collection_interval: 60  # seconds
+
+  weather:
+    cities:
+      - name: "New York"
+        lat: 40.7128
+        lon: -74.0060
+      - name: "London"
+        lat: 51.5074
+        lon: -0.1278
+      - name: "Tokyo"
+        lat: 35.6762
+        lon: 139.6503
+      - name: "Singapore"
+        lat: 1.3521
+        lon: 103.8198
+    metrics: ["temperature", "humidity", "pressure", "wind_speed"]
+    collection_interval: 300  # seconds (5 minutes)
+
+  github:
+    repositories:
+      - "tensorflow/tensorflow"
+      - "microsoft/vscode"
+      - "facebook/react"
+      - "kubernetes/kubernetes"
+    metrics: ["commit_count", "issue_count", "pr_count", "stars"]
+    collection_interval: 300  # seconds (5 minutes)
+
+# Agent Configuration
+agents:
+  statistical:
+    weight: 0.25  # Weight in final decision
+    min_confidence: 0.5
+
+  context:
+    weight: 0.15
+    min_confidence: 0.4
+    news_sources: ["newsapi", "reddit"]
+
+  temporal:
+    weight: 0.25
+    min_confidence: 0.5
+
+  correlation:
+    weight: 0.20
+    min_confidence: 0.6
+
+  coordinator:
+    weight: 0.15
+    consensus_threshold: 0.6  # Minimum weighted consensus for anomaly
+
+# Knowledge Graph Settings
+knowledge_graph:
+  max_nodes: 1000  # Maximum anomaly nodes to store
+  edge_expiry_hours: 168  # 1 week
+  similarity_threshold: 0.8  # For anomaly signature matching
+  causal_confidence_threshold: 0.7
+
+# Explainability Settings
+explainability:
+  counterfactual:
+    enabled: true
+    max_scenarios: 5
+
+  narrative:
+    enabled: true
+    detail_level: "medium"  # low, medium, high
+    include_technical: true
+
+  confidence_display:
+    show_uncertainty: true
+    precision: 2  # decimal places
+
+# Alert Settings
+alerts:
+  severity_thresholds:
+    critical: 0.9
+    high: 0.75
+    medium: 0.5
+    low: 0.3
+
+  fatigue_prevention:
+    enabled: true
+    grouping_window_minutes: 15
+    max_alerts_per_window: 10
+
+  notification:
+    enabled: false  # Set to true to enable notifications
+    channels: ["webhook", "email"]
+
+# Performance Settings
+performance:
+  max_concurrent_sources: 10
+  cache_ttl_seconds: 30
+  batch_size: 100
+  async_workers: 4

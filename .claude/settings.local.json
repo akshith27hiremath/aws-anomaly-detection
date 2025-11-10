@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(venvScriptspython test_openmeteo.py)",
+      "Bash(.venvScriptspython test_openmeteo.py)",
+      "Bash(npm install)",
+      "Bash(curl http://localhost:5173)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(for class in \"chart-container\" \"chart-legend\" \"chart-wrapper\" \"empty-state\" \"legend-color\" \"legend-item\" \"legend-label\" \"text-muted\")",
+      "Bash(do grep -q \"\\.$class\" \"C:\\Users\\shriy\\Downloads\\aws-hackathon\\aws-hackathon\\anomaly-detection-system\\frontend\\src\\App.css\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(for class in \"empty-state\" \"graph-container\" \"graph-legend\" \"graph-stats\" \"graph-viz\" \"legend-dot\" \"legend-item\" \"stat-item\" \"text-muted\")",
+      "Bash(for:*)",
+      "Bash(npm run build:*)",
+      "Bash(pip install:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
