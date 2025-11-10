@@ -7,6 +7,8 @@ interface Node {
   label: string;
   type: string;
   importance: number;
+  severity?: string;
+  source?: string;
 }
 
 interface Link {
@@ -57,16 +59,53 @@ export function KnowledgeGraph({ data, onRefresh }: KnowledgeGraphProps) {
     setNodePositions(positions);
   }, [data]);
 
-  const getNodeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      asset: "rgba(255, 255, 255, 0.9)",
-      entity: "rgba(255, 255, 255, 0.7)",
-      exchange: "rgba(200, 200, 200, 0.8)",
-      event: "rgba(180, 180, 180, 0.8)",
-      source: "rgba(160, 160, 160, 0.8)",
-      pattern: "rgba(140, 140, 140, 0.8)",
+  const getNodeColor = (node: Node) => {
+    // Color by source type for better differentiation
+    const sourceColors: Record<string, string> = {
+      crypto: "#10b981", // Green
+      coingecko: "#10b981", // Green
+      weather: "#f59e0b", // Orange
+      github: "#ec4899", // Pink
+      oi_derivatives: "#eab308", // Yellow
+      correlation: "#8b5cf6", // Purple
+      statistical: "#3b82f6", // Blue
+      temporal: "#06b6d4", // Cyan
+      context: "#f97316", // Orange-Red
     };
-    return colors[type] || "rgba(255, 255, 255, 0.6)";
+
+    // Color by severity if available
+    if (node.severity) {
+      const severityColors: Record<string, string> = {
+        critical: "#ef4444", // Red
+        high: "#f59e0b", // Orange
+        medium: "#eab308", // Yellow
+        low: "#3b82f6", // Blue
+      };
+      return severityColors[node.severity] || "#94a3b8";
+    }
+
+    // Otherwise color by source/type
+    const source = (node.source || node.type || "").toLowerCase();
+    for (const key in sourceColors) {
+      if (source.includes(key)) {
+        return sourceColors[key];
+      }
+    }
+
+    return "#94a3b8"; // Default gray
+  };
+
+  const getNodeLabel = (node: Node) => {
+    // Extract severity emoji if present
+    const severityEmoji: Record<string, string> = {
+      critical: "🔴",
+      high: "🟠",
+      medium: "🟡",
+      low: "🔵",
+    };
+
+    const emoji = node.severity ? severityEmoji[node.severity] || "" : "";
+    return `${emoji} ${node.label}`.trim();
   };
 
   return (
@@ -145,25 +184,25 @@ export function KnowledgeGraph({ data, onRefresh }: KnowledgeGraphProps) {
                       cx={pos.x}
                       cy={pos.y}
                       r={radius + 10}
-                      fill={getNodeColor(node.type)}
+                      fill={getNodeColor(node)}
                       opacity={0.2}
                       initial={{ scale: 0 }}
-                      animate={{ 
+                      animate={{
                         scale: [1, 1.2, 1],
                         opacity: [0.1, 0.3, 0.1]
                       }}
-                      transition={{ 
+                      transition={{
                         scale: { duration: 0.5, delay: index * 0.1 },
                         opacity: { duration: 2, repeat: Infinity, delay: index * 0.3 }
                       }}
                     />
-                    
+
                     {/* Node circle */}
                     <motion.circle
                       cx={pos.x}
                       cy={pos.y}
                       r={radius}
-                      fill={getNodeColor(node.type)}
+                      fill={getNodeColor(node)}
                       stroke="rgba(255, 255, 255, 0.5)"
                       strokeWidth="2"
                       initial={{ scale: 0 }}
@@ -184,7 +223,7 @@ export function KnowledgeGraph({ data, onRefresh }: KnowledgeGraphProps) {
                       animate={{ opacity: 0.8 }}
                       transition={{ delay: index * 0.1 + 0.3 }}
                     >
-                      {node.label}
+                      {getNodeLabel(node)}
                     </motion.text>
                   </g>
                 );
@@ -200,18 +239,56 @@ export function KnowledgeGraph({ data, onRefresh }: KnowledgeGraphProps) {
         )}
       </div>
 
-      {/* Legend */}
+      {/* Enhanced Legend */}
       {data && (
-        <div className="mt-4 flex flex-wrap gap-3">
-          {Array.from(new Set(data.nodes.map(n => n.type))).map((type) => (
-            <div key={type} className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: getNodeColor(type) }}
-              />
-              <span className="text-white/70 text-xs capitalize">{type}</span>
+        <div className="mt-4 space-y-3">
+          <div className="text-white/70 text-xs font-medium">Legend:</div>
+
+          {/* Source Types */}
+          <div className="space-y-2">
+            <div className="text-white/50 text-xs">Data Sources:</div>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#10b981" }} />
+                <span className="text-white/70 text-xs">Crypto</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
+                <span className="text-white/70 text-xs">Weather</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ec4899" }} />
+                <span className="text-white/70 text-xs">GitHub</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#eab308" }} />
+                <span className="text-white/70 text-xs">OI Derivatives</span>
+              </div>
             </div>
-          ))}
+          </div>
+
+          {/* Severity Levels */}
+          <div className="space-y-2">
+            <div className="text-white/50 text-xs">Severity Levels:</div>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ef4444" }} />
+                <span className="text-white/70 text-xs">🔴 Critical</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#f59e0b" }} />
+                <span className="text-white/70 text-xs">🟠 High</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#eab308" }} />
+                <span className="text-white/70 text-xs">🟡 Medium</span>
+              </div>
+              <div className="flex items-center gap-2 backdrop-blur-sm bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#3b82f6" }} />
+                <span className="text-white/70 text-xs">🔵 Low</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

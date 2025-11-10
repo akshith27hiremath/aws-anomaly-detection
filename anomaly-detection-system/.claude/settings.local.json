@@ -6,7 +6,12 @@
       "Bash(python run_system.py:*)",
       "Bash(npm run dev)",
       "Bash(find:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(timeout 5 bash:*)",
+      "Bash(timeout 30 bash -c 'while true; do curl -s http://localhost:8000/analysis 2>/dev/null | grep -o '\"''\"'\"\"narrative\"\":\"\"[^\"\"]*\"\"'\"''\"' | head -1 && break || sleep 2; done')",
+      "Bash(python:*)",
+      "Bash(netstat:*)",
+      "Bash(uvicorn:*)"
     ],
     "deny": [],
     "ask": []

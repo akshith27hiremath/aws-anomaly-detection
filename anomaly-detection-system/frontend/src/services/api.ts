@@ -156,6 +156,118 @@ export async function triggerAnalysis(): Promise<AnalysisResponse> {
 }
 
 /**
+ * OI Derivatives Types
+ */
+export interface OICurrentData {
+  status: string;
+  timestamp: string;
+  data: {
+    [symbol: string]: {
+      open_interest?: number;
+      funding_rate?: number;
+      long_short_ratio?: number;
+      top_trader_long_short_ratio?: number;
+    };
+  };
+}
+
+export interface OIDivergence {
+  anomaly_id: string;
+  source: string;
+  symbol: string;
+  timestamp: string;
+  detection_type: string;
+  confidence: number;
+  severity: string;
+  explanation: string;
+  metadata: any;
+}
+
+export interface OIDivergencesResponse {
+  status: string;
+  timestamp: string;
+  divergence_count: number;
+  divergences: OIDivergence[];
+}
+
+export interface FundingRate {
+  rate: number;
+  timestamp: string;
+  signal: string;
+}
+
+export interface FundingRatesResponse {
+  status: string;
+  timestamp: string;
+  funding_rates: {
+    [symbol: string]: FundingRate;
+  };
+}
+
+export interface LongShortRatio {
+  global?: {
+    ratio: number;
+    timestamp: string;
+  };
+  top_traders?: {
+    ratio: number;
+    timestamp: string;
+  };
+}
+
+export interface LongShortRatiosResponse {
+  status: string;
+  timestamp: string;
+  ratios: {
+    [symbol: string]: LongShortRatio;
+  };
+}
+
+/**
+ * Fetch current OI derivatives data
+ */
+export async function fetchOICurrent(): Promise<OICurrentData> {
+  const response = await fetch(`${API_BASE_URL}/oi/current`);
+  if (!response.ok) {
+    throw new Error(`OI current data fetch failed: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
+ * Fetch detected OI divergences
+ */
+export async function fetchOIDivergences(): Promise<OIDivergencesResponse> {
+  const response = await fetch(`${API_BASE_URL}/oi/divergences`);
+  if (!response.ok) {
+    throw new Error(`OI divergences fetch failed: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
+ * Fetch current funding rates
+ */
+export async function fetchFundingRates(): Promise<FundingRatesResponse> {
+  const response = await fetch(`${API_BASE_URL}/oi/funding-rates`);
+  if (!response.ok) {
+    throw new Error(`Funding rates fetch failed: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
+ * Fetch long/short ratios
+ */
+export async function fetchLongShortRatios(): Promise<LongShortRatiosResponse> {
+  const response = await fetch(`${API_BASE_URL}/oi/long-short-ratios`);
+  if (!response.ok) {
+    throw new Error(`Long/short ratios fetch failed: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
  * WebSocket connection manager for real-time updates
  */
 export class WebSocketManager {

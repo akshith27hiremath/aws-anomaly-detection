@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 from backend.explainability.counterfactual import CounterfactualGenerator
+from backend.explainability.llm_narrative_generator import get_llm_generator
 from backend.explainability.narrative_generator import NarrativeGenerator
 from backend.knowledge_graph import AnomalyTracer, KnowledgeGraphManager
 from backend.utils.config import get_detection_config
@@ -46,6 +47,7 @@ class CoordinatorAgent:
         self.anomaly_tracer = AnomalyTracer(knowledge_graph)
         self.counterfactual_gen = counterfactual_gen
         self.narrative_gen = narrative_gen
+        self.llm_generator = get_llm_generator()
 
         self.name = "CoordinatorAgent"
 
@@ -186,8 +188,26 @@ class CoordinatorAgent:
         # Generate explanations
         combined_explanation = self._combine_explanations(anomaly_group)
 
-        # Generate narrative
-        narrative = self.narrative_gen.generate(representative, anomaly_group)
+        # Generate narratives (both template and LLM)
+        template_narrative = self.narrative_gen.generate(representative, anomaly_group)
+
+        # Create initial report for LLM
+        temp_report = {
+            'source': representative.get('source'),
+            'metric': representative.get('metric'),
+            'timestamp': representative.get('timestamp', datetime.now()),
+            'value': representative.get('value'),
+            'consensus_score': consensus_score,
+            'severity': severity,
+            'severity_score': avg_severity_score,
+            'detection_count': len(anomaly_group),
+            'detecting_agents': list(set(a.get('agent_name') for a in anomaly_group)),
+            'explanation': combined_explanation,
+            'metadata': representative.get('metadata', {})
+        }
+
+        # Generate LLM-powered narrative
+        llm_narrative = self.llm_generator.generate_anomaly_narrative(temp_report)
 
         # Generate counterfactuals
         counterfactuals = self.counterfactual_gen.generate(representative)
@@ -205,7 +225,8 @@ class CoordinatorAgent:
             'detecting_agents': list(set(a.get('agent_name') for a in anomaly_group)),
             'detection_methods': list(set(all_methods)),
             'explanation': combined_explanation,
-            'narrative': narrative,
+            'narrative': llm_narrative,  # Use LLM narrative
+            'template_narrative': template_narrative,  # Keep template as backup
             'counterfactuals': counterfactuals,
             'individual_detections': anomaly_group,
             'created_at': datetime.now()
@@ -314,6 +335,7 @@ class AgentOrchestrator:
         """Initialize the orchestrator with all agents."""
         from .context_agent import ContextAgent
         from .correlation_agent import CorrelationAgent
+        from .oi_agent import OIAgent
         from .statistical_agent import StatisticalAgent
         from .temporal_agent import TemporalAgent
 
@@ -327,6 +349,7 @@ class AgentOrchestrator:
         self.temporal_agent = TemporalAgent()
         self.correlation_agent = CorrelationAgent()
         self.context_agent = ContextAgent()
+        self.oi_agent = OIAgent()
         self.coordinator = CoordinatorAgent(
             self.knowledge_graph,
             self.counterfactual_gen,
@@ -357,7 +380,8 @@ class AgentOrchestrator:
             self.statistical_agent.analyze(current_data, historical_data),
             self.temporal_agent.analyze(current_data, historical_data),
             self.correlation_agent.analyze(current_data, historical_data),
-            self.context_agent.analyze(current_data, historical_data)
+            self.context_agent.analyze(current_data, historical_data),
+            self.oi_agent.analyze(current_data, historical_data)
         ]
 
         agent_results = await asyncio.gather(*agent_tasks)

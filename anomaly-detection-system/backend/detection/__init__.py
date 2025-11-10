@@ -3,6 +3,12 @@ Anomaly detection algorithms.
 """
 
 from .ml_detectors import EnsembleMLDetector, IsolationForestDetector, LOFDetector
+from .oi_detectors import (
+    FundingRateDetector,
+    LongShortRatioDetector,
+    OIDivergenceDetector,
+    OIFeatureEngineer,
+)
 from .statistical_detectors import (
     CUSUMDetector,
     EnsembleStatisticalDetector,
@@ -34,4 +40,8 @@ __all__ = [
     'SeasonalAnomalyDetector',
     'ExponentialSmoothingDetector',
     'MovingAverageCrossoverDetector',
+    'OIDivergenceDetector',
+    'FundingRateDetector',
+    'LongShortRatioDetector',
+    'OIFeatureEngineer',
 ]

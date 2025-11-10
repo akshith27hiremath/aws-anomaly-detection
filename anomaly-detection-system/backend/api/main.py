@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.agents import AgentOrchestrator
-from backend.data_sources import CryptoClient, GitHubClient, WeatherClient
+from backend.data_sources import CryptoClient, GitHubClient, OIDerivativesClient, WeatherClient
 from backend.utils.config import get_settings
 from backend.utils.helpers import setup_logging
 
@@ -51,7 +51,8 @@ orchestrator = AgentOrchestrator()
 data_clients = {
     'crypto': CryptoClient(),
     'weather': WeatherClient(),
-    'github': GitHubClient()
+    'github': GitHubClient(),
+    'oi_derivatives': OIDerivativesClient()
 }
 
 # Data storage
@@ -288,6 +289,139 @@ async def trigger_analysis():
             'status': 'error',
             'error': str(e)
         }
+
+
+# OI Derivatives specific endpoints
+@app.get("/oi/current")
+async def get_current_oi():
+    """Get current OI derivatives data."""
+    try:
+        oi_client = data_clients.get('oi_derivatives')
+        if not oi_client:
+            return {'error': 'OI derivatives client not available'}
+
+        data = await oi_client.fetch_data()
+
+        # Group by symbol
+        by_symbol = {}
+        for point in data:
+            symbol = point.get('symbol', 'unknown')
+            if symbol not in by_symbol:
+                by_symbol[symbol] = {}
+
+            metric = point.get('metric')
+            value = point.get('value')
+            by_symbol[symbol][metric] = value
+
+        return {
+            'status': 'success',
+            'timestamp': datetime.now(),
+            'data': by_symbol
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching current OI data: {e}")
+        return {'status': 'error', 'error': str(e)}
+
+
+@app.get("/oi/divergences")
+async def get_oi_divergences():
+    """Get detected OI divergences."""
+    try:
+        # Filter anomalies for OI divergences
+        oi_anomalies = []
+
+        if latest_analysis and 'reports' in latest_analysis:
+            for report in latest_analysis['reports']:
+                if report.get('source') == 'oi_derivatives':
+                    # Check if it's a divergence detection
+                    metadata = report.get('metadata', {})
+                    if 'divergence_type' in metadata or 'detection_type' in metadata:
+                        oi_anomalies.append(report)
+
+        return {
+            'status': 'success',
+            'timestamp': datetime.now(),
+            'divergence_count': len(oi_anomalies),
+            'divergences': oi_anomalies
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching OI divergences: {e}")
+        return {'status': 'error', 'error': str(e)}
+
+
+@app.get("/oi/funding-rates")
+async def get_funding_rates():
+    """Get current funding rates for all tracked symbols."""
+    try:
+        oi_client = data_clients.get('oi_derivatives')
+        if not oi_client:
+            return {'error': 'OI derivatives client not available'}
+
+        data = await oi_client.fetch_data()
+
+        # Extract funding rates
+        funding_rates = {}
+        for point in data:
+            if point.get('metric') == 'funding_rate':
+                symbol = point.get('symbol', 'unknown')
+                funding_rates[symbol] = {
+                    'rate': point.get('value'),
+                    'timestamp': point.get('timestamp'),
+                    'signal': 'extreme' if abs(point.get('value', 0)) > 0.1 else 'normal'
+                }
+
+        return {
+            'status': 'success',
+            'timestamp': datetime.now(),
+            'funding_rates': funding_rates
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching funding rates: {e}")
+        return {'status': 'error', 'error': str(e)}
+
+
+@app.get("/oi/long-short-ratios")
+async def get_long_short_ratios():
+    """Get long/short ratios for all tracked symbols."""
+    try:
+        oi_client = data_clients.get('oi_derivatives')
+        if not oi_client:
+            return {'error': 'OI derivatives client not available'}
+
+        data = await oi_client.fetch_data()
+
+        # Extract ratios
+        ratios = {}
+        for point in data:
+            symbol = point.get('symbol', 'unknown')
+
+            if symbol not in ratios:
+                ratios[symbol] = {}
+
+            metric = point.get('metric')
+            if metric == 'long_short_ratio':
+                ratios[symbol]['global'] = {
+                    'ratio': point.get('value'),
+                    'timestamp': point.get('timestamp')
+                }
+            elif metric == 'top_trader_long_short_ratio':
+                ratios[symbol]['top_traders'] = {
+                    'ratio': point.get('value'),
+                    'timestamp': point.get('timestamp')
+                }
+
+        return {
+            'status': 'success',
+            'timestamp': datetime.now(),
+            'ratios': ratios
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching long/short ratios: {e}")
+        return {'status': 'error', 'error': str(e)}
 
 
 # WebSocket endpoint

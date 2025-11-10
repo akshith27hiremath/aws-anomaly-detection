@@ -6,6 +6,8 @@ import { AnalysisPanel } from "./dashboard/AnalysisPanel";
 import { KnowledgeGraph } from "./dashboard/KnowledgeGraph";
 import { DataSources } from "./dashboard/DataSources";
 import { StatisticsPanel } from "./dashboard/StatisticsPanel";
+import { OIPanel } from "./dashboard/OIPanel";
+import { ProcessExplainer } from "./dashboard/ProcessExplainer";
 import * as api from "../services/api";
 import { wsManager } from "../services/api";
 
@@ -297,10 +299,19 @@ Status: ${analysis.anomaly_count} total anomalies detected | ${analysis.high_sev
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <HealthCheck 
+              <HealthCheck
                 status={healthStatus}
                 onCheckHealth={fetchHealthStatus}
               />
+            </motion.div>
+
+            {/* OI Panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <OIPanel />
             </motion.div>
 
             {/* Data Sources */}
@@ -309,18 +320,28 @@ Status: ${analysis.anomaly_count} total anomalies detected | ${analysis.high_sev
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <DataSources 
+              <DataSources
                 sources={dataSources}
                 onUpdate={fetchDataSources}
               />
             </motion.div>
           </div>
 
-          {/* Knowledge Graph - Full Width */}
+          {/* Process Explainer - Full Width */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            className="xl:col-span-12"
+          >
+            <ProcessExplainer />
+          </motion.div>
+
+          {/* Knowledge Graph - Full Width */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
             className="xl:col-span-12"
           >
             <KnowledgeGraph

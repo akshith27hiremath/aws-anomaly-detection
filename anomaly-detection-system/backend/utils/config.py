@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     coingecko_api_key: Optional[str] = Field(default=None, alias="COINGECKO_API_KEY")
     openweather_api_key: Optional[str] = Field(default=None, alias="OPENWEATHER_API_KEY")
     github_token: Optional[str] = Field(default=None, alias="GITHUB_TOKEN")
+    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
+    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
 
     # API URLs
     coingecko_base_url: str = Field(

@@ -91,24 +91,39 @@ data_sources:
     metrics: ["commit_count", "issue_count", "pr_count", "stars"]
     collection_interval: 300  # seconds (5 minutes)
 
+  oi_derivatives:
+    symbols: ["BTCUSDT", "ETHUSDT", "BNBUSDT"]
+    metrics: ["open_interest", "funding_rate", "long_short_ratio", "top_trader_long_short_ratio"]
+    collection_interval: 60  # seconds
+    divergence_detection:
+      enabled: true
+      price_threshold: 1.0  # % price change to trigger divergence check
+      oi_threshold: 2.0  # % OI change to trigger divergence check
+      spike_threshold: 10.0  # % OI spike considered anomalous
+
 # Agent Configuration
 agents:
   statistical:
-    weight: 0.25  # Weight in final decision
+    weight: 0.20  # Weight in final decision
     min_confidence: 0.5
 
   context:
-    weight: 0.15
+    weight: 0.10
     min_confidence: 0.4
     news_sources: ["newsapi", "reddit"]
 
   temporal:
-    weight: 0.25
+    weight: 0.20
     min_confidence: 0.5
 
   correlation:
-    weight: 0.20
+    weight: 0.15
     min_confidence: 0.6
+
+  oi_derivatives:
+    weight: 0.20  # OI agent has significant weight due to predictive value
+    min_confidence: 0.6
+    enabled: true
 
   coordinator:
     weight: 0.15
